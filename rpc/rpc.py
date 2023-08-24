@@ -1,5 +1,8 @@
 import socket
 import threading
+import multiprocessing as mp
+
+import constRPC as crpc
 from functools import reduce
 from typing import Callable,Dict
 
@@ -23,34 +26,34 @@ class Client:
         except:
             return None 
 
-    def __numbers_tuple_to_string(self,numbers: tuple[float]) -> str:
-        numbers_str = ';'.join(map(str,numbers))
+    def __numbers_tuple_to_string(self,numbers: tuple) -> str:
+        numbers_str = crpc.SEPARATOR_CHAR.join(map(str,numbers))
         return numbers_str
     
     def __prepare_request(self,operation_code:str,args:tuple) -> str:
-       return f'{operation_code};{self.__numbers_tuple_to_string(args)}'
+       return f'{operation_code}{crpc.SEPARATOR_CHAR}{self.__numbers_tuple_to_string(args)}'
 
-    def sum(self,numbers:tuple[float]) -> float:
+    def sum(self,numbers:tuple) -> float:
         req = self.__prepare_request(SUM,numbers)
-        self.conection.send(req.encode('UTF-8'))
+        self.conection.send(req.encode(crpc.ENCODE))
         resp = self.conection.recv(1024).decode()
         return self.__get_float_resp(resp)
 
-    def subtract(self,numbers:tuple[float]) -> float:
+    def subtract(self,numbers:tuple) -> float:
         req = self.__prepare_request(SUB,numbers)
-        self.conection.send(req.encode('UTF-8'))
+        self.conection.send(req.encode(crpc.ENCODE))
         resp = self.conection.recv(1024).decode()
         return self.__get_float_resp(resp)
     
-    def divide(self,numbers:tuple[float]) -> float:
+    def divide(self,numbers:tuple) -> float:
         req = self.__prepare_request(DIV,numbers)
-        self.conection.send(req.encode('UTF-8'))
+        self.conection.send(req.encode(crpc.ENCODE))
         resp = self.conection.recv(1024).decode()
         return self.__get_float_resp(resp)
     
-    def multiply(self,numbers:tuple[float]) -> float:
+    def multiply(self,numbers:tuple) -> float:
         req = self.__prepare_request(MUL,numbers)
-        self.conection.send(req.encode('UTF-8'))
+        self.conection.send(req.encode(crpc.ENCODE))
         resp = self.conection.recv(1024).decode()
         return self.__get_float_resp(resp)
 
@@ -63,7 +66,6 @@ class Server:
 
     __OPERATION_ARG = 0
     __FIRST_ARG = 1
-    __SEPARATOR_CHAR = ';'
 
     def __init__(self,ip,port) -> None:
         self.ip = ip
@@ -82,11 +84,11 @@ class Server:
 
 
     def get_operation_code(self,req:str) -> str:
-        reqArray = req.split(self.__SEPARATOR_CHAR)
+        reqArray = req.split(crpc.SEPARATOR_CHAR)
         return reqArray[self.__OPERATION_ARG] if reqArray else None
     
     def get_argument_tuple(self,req:str) -> tuple:
-        reqArray = req.split(self.__SEPARATOR_CHAR)
+        reqArray = req.split(crpc.SEPARATOR_CHAR)
         if len(reqArray) <= self.__FIRST_ARG:
             return None
         return tuple(reqArray[self.__FIRST_ARG:])
@@ -124,6 +126,7 @@ class Server:
             return None
     
     def _handle_client(self,addr,conn):
+       print('chamou')
        with conn:
             try:
                 while True:
@@ -153,5 +156,5 @@ class Server:
 
         while True:
             conn,addr = self.server_socket.accept()
-            t1 = threading.Thread(target=self._handle_client,args=(addr,conn))
-            t1.start()
+            p1 = mp.Process(target=self._handle_client,args=(addr,conn))
+            p1.start()
