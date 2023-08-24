@@ -1,6 +1,8 @@
 import socket
 import threading
+import json
 import multiprocessing as mp
+import traceback
 
 import constRPC as crpc
 from functools import reduce
@@ -11,6 +13,21 @@ SUB = '__SUB__'
 MUL = '__MUL__'
 DIV = '__DIV__'
 END = '__END__'
+
+def receive_complete_message(connection):
+    
+    complete_message = b""
+
+    while True:
+        data = connection.recv(crpc.BUFFER_SIZE)
+        if not data:
+            break
+        complete_message += data
+
+        if len(data) < crpc.BUFFER_SIZE:
+            break
+    return complete_message
+
 
 class Client:
     def __init__(self,ip,port) -> None:
@@ -31,35 +48,38 @@ class Client:
         return numbers_str
     
     def __prepare_request(self,operation_code:str,args:tuple) -> str:
-       return f'{operation_code}{crpc.SEPARATOR_CHAR}{self.__numbers_tuple_to_string(args)}'
+       return json.dumps({
+        "operation": operation_code,
+        "args": args
+       })
 
     def sum(self,numbers:tuple) -> float:
         req = self.__prepare_request(SUM,numbers)
         self.conection.send(req.encode(crpc.ENCODE))
-        resp = self.conection.recv(1024).decode()
-        return self.__get_float_resp(resp)
+        return self.__get_response()
 
     def subtract(self,numbers:tuple) -> float:
         req = self.__prepare_request(SUB,numbers)
         self.conection.send(req.encode(crpc.ENCODE))
-        resp = self.conection.recv(1024).decode()
-        return self.__get_float_resp(resp)
+        return self.__get_response()
     
     def divide(self,numbers:tuple) -> float:
         req = self.__prepare_request(DIV,numbers)
         self.conection.send(req.encode(crpc.ENCODE))
-        resp = self.conection.recv(1024).decode()
-        return self.__get_float_resp(resp)
+        return self.__get_response()
     
     def multiply(self,numbers:tuple) -> float:
         req = self.__prepare_request(MUL,numbers)
         self.conection.send(req.encode(crpc.ENCODE))
-        resp = self.conection.recv(1024).decode()
-        return self.__get_float_resp(resp)
+        return self.__get_response()
 
-    def end(self) -> str:
-        self.conection.send(END.encode())
-        return self.conection.recv(1024).decode()
+    def __get_response(self):
+        response_data = receive_complete_message(self.conection)
+        return json.loads(response_data.decode(crpc.ENCODE))
+
+    def __del__(self) -> str:
+        self.conection.send(self.__prepare_request(END,()).encode())
+        return 
     
     
 class Server: 
@@ -83,15 +103,20 @@ class Server:
             }
 
 
-    def get_operation_code(self,req:str) -> str:
-        reqArray = req.split(crpc.SEPARATOR_CHAR)
-        return reqArray[self.__OPERATION_ARG] if reqArray else None
-    
-    def get_argument_tuple(self,req:str) -> tuple:
-        reqArray = req.split(crpc.SEPARATOR_CHAR)
-        if len(reqArray) <= self.__FIRST_ARG:
+    def get_operation_code(self, req: str) -> str:
+        try:
+            request_data = json.loads(req)
+            return request_data.get("operation")
+        except json.JSONDecodeError:
             return None
-        return tuple(reqArray[self.__FIRST_ARG:])
+    
+    def get_argument_tuple(self, req: str) -> tuple:
+        try:
+            request_data = json.loads(req)
+            args = request_data.get("args")
+            return tuple(args) if args else None
+        except json.JSONDecodeError:
+            return None
 
     def __get_operation(self,operation_code:str) -> Callable:
         return self.operations.get(operation_code,lambda *args:None)
@@ -126,15 +151,17 @@ class Server:
             return None
     
     def _handle_client(self,addr,conn):
-       print('chamou')
+       print(f'Conexão estabelecida com {addr}')
        with conn:
             try:
                 while True:
-                    req = conn.recv(1024).decode()
+                    req = receive_complete_message(conn).decode(crpc.ENCODE)
 
                     operation_code = self.get_operation_code(req)
+                    print(operation_code)
                     if operation_code == END:
-                        conn.sendall('finalizado'.encode())
+                        print('entrou')
+                        conn.close()
                         break
                     args = self.get_argument_tuple(req)
                     operation = self.__get_operation(operation_code)
@@ -146,8 +173,9 @@ class Server:
 
                     conn.send(str_result.encode())
             except Exception as e:
+                traceback.print_exc()
                 print("Error:", e)
-
+            print(f'Conexão finalizada com {addr}')
     def start(self) -> None:
         
         self.server_socket.bind((self.ip, self.port))
@@ -158,3 +186,4 @@ class Server:
             conn,addr = self.server_socket.accept()
             p1 = mp.Process(target=self._handle_client,args=(addr,conn))
             p1.start()
+            p1.join()
