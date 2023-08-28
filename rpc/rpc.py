@@ -241,5 +241,5 @@ class Server:
 
         while True:
             conn,addr = self.server_socket.accept()
-            t1 = threading.Thread(target=self._handle_client,args=(addr,conn))
-            t1.start()
+            cliente = mp.Process(target=self._handle_client,args=(addr,conn))
+            cliente.start()
