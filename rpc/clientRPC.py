@@ -2,7 +2,7 @@ from rpc import Client
 
 client = Client('127.0.0.1',8000)
 
-list_numbers = [x for x in range(10,1001)]
+list_numbers = [x for x in range(10,1000000)]
 is_prime_list = client.is_prime(list_numbers)
 
 prime_numbers = [number for number, is_prime in zip(list_numbers, is_prime_list) if is_prime]
