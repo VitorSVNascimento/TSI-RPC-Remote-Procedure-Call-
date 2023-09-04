@@ -41,6 +41,7 @@ class Client:
         self.port = port
         self.conection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.conection.connect((self.ip,self.port))
+        self.cache = {}
 
     def __get_float_resp(self,resp:str) -> float:
         try:
@@ -61,36 +62,52 @@ class Client:
 
     def sum(self,numbers:tuple) -> float:
         req = self.__prepare_request(SUM,numbers)
+        if req in self.cache:
+            return self.cache[req]
         self.conection.send(req.encode(crpc.ENCODE))
+        self.cache[req] = response
         return self.__get_response()
 
     def subtract(self,numbers:tuple) -> float:
         req = self.__prepare_request(SUB,numbers)
+        if req in self.cache:
+            return self.cache[req]
         self.conection.send(req.encode(crpc.ENCODE))
+        self.cache[req] = response
         return self.__get_response()
     
     def divide(self,numbers:tuple) -> float:
         req = self.__prepare_request(DIV,numbers)
+        if req in self.cache:
+            return self.cache[req]
         self.conection.send(req.encode(crpc.ENCODE))
+        self.cache[req] = response
         return self.__get_response()
     
     def multiply(self,numbers:tuple) -> float:
         req = self.__prepare_request(MUL,numbers)
+        if req in self.cache:
+            return self.cache[req]        
         self.conection.send(req.encode(crpc.ENCODE))
+        self.cache[req] = response
         return self.__get_response()
 
-    def is_prime(self,numbers:List[int]) -> List[bool]:
+    def is_prime(self,start:int,end:int,step:int) -> List[int]:
+        numbers = (start,end,step)
         req = self.__prepare_request(IS_PRIME,numbers)
+        if req in self.cache:
+            return self.cache[req]
         self.conection.send(req.encode(crpc.ENCODE))
         response = self.__get_response()
+        self.cache[req] = response
         return response
-
-    def mp_is_prime(self,numbers:List[int]) -> List[bool]:
-        req = self.__prepare_request(MP_IS_PRIME,numbers)
-        self.conection.send(req.encode(crpc.ENCODE))
-        response = self.__get_response()
         
-        return response
+    def get_cache(self,cache_str:str):
+        return self.cache.get(cache_str)
+        pass
+
+    def add_cache(self):
+        pass
 
     def __get_response(self):
         response_data = receive_complete_message(self.conection)
@@ -119,9 +136,8 @@ class Server:
             SUB:self.__sub_function,
             MUL:self.__mul_function,
             DIV:self.__div_function,
-            IS_PRIME:self.__is_prime_function,
-            MP_IS_PRIME:self.multiprocessing_is_prime_function
-            }
+            IS_PRIME:self.is_prime_function,
+        }
 
 
     def get_operation_code(self, req: str) -> str:
@@ -173,41 +189,67 @@ class Server:
         except:
             return None
 
-    def __is_prime_function(self,numbers:tuple) -> List[bool]:
+    def is_prime_function(self,args:tuple) -> List[int]:
+        START_POSITION = 0
+        END_POSITION = 1
+        STEP_POSITION = 2
+        try:
+            number_list = self.make_number_list(args[START_POSITION],args[END_POSITION],args[STEP_POSITION])
+            numbers_tuple = tuple(map(int,number_list))
+
+            if mathOperations.is_multiprocessing_better(len(numbers_tuple)):
+                return self.multiprocessing_is_prime_function(numbers_tuple)
+            return self.single_processing_is_prime_function(numbers_tuple)
+        except:
+          traceback.print_exc()
+
+    def single_processing_is_prime_function(self,numbers:tuple) -> List[bool]:
         try: 
             list_numbers = list(map(int,numbers))
             start_time = time.time()
 
             is_prime_list = list(map(mathOperations.numbrer_is_prime,list_numbers))
+            prime_numbers = [number for number, is_prime in zip(list_numbers, is_prime_list) if is_prime]
 
             end_time = time.time()  # Marca o tempo de término da operação
             elapsed_time = end_time - start_time  # Calcula o tempo decorrido
 
             print(f"Tempo gasto: {elapsed_time:.4f} segundos")
-            return is_prime_list
+            return prime_numbers
         except:
             traceback.print_exc()
             return None
         pass
 
-    def multiprocessing_is_prime_function(self, numbers:tuple) -> List[bool]:
+    def multiprocessing_is_prime_function(self, numbers:tuple) -> List[int]:
         try:
             list_numbers = list(map(int, numbers))
             with mp.Pool(processes=os.cpu_count()) as pool:
                 start_time = time.time()  # Marca o tempo de início da operação
 
                 results = pool.map(mathOperations.numbrer_is_prime, list_numbers)
+                prime_numbers = [number for number, is_prime in zip(list_numbers, results) if is_prime]
 
                 end_time = time.time()  # Marca o tempo de término da operação
                 elapsed_time = end_time - start_time  # Calcula o tempo decorrido
 
 
                 print(f"Tempo gasto MP: {elapsed_time:.4f} segundos")
-                return results
+                return prime_numbers
 
         except:
             traceback.print_exc()
             return None
+
+    def make_number_list(self,start: int, end: int, step: int = 1) -> List[int]:
+        if step == 0:
+            raise ValueError("O passo não pode ser zero.")
+        
+        if step > 0:
+            return [i for i in range(start, end + 1, step)]
+        else:
+            return [i for i in range(start, end - 1, step)]
+
     
     def _handle_client(self,addr,conn):
        print(f'Conexão estabelecida com {addr}')
@@ -233,6 +275,7 @@ class Server:
                 traceback.print_exc()
                 print("Error:", e)
             print(f'Conexão finalizada com {addr}')
+
     def start(self) -> None:
         
         self.server_socket.bind((self.ip, self.port))

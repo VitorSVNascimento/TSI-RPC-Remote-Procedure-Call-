@@ -4,6 +4,7 @@ def numbrer_is_prime(number:int) -> bool:
     try:
         if number <= 1:
             return False
+        
         if number <= crpc.SMALLEST_PRIME:
             return True
         
@@ -19,3 +20,7 @@ def numbrer_is_prime(number:int) -> bool:
         return True 
     except:
         return False
+
+def is_multiprocessing_better(list_size:int):
+    IS_BETTER = 10000
+    return list_size >= IS_BETTER
