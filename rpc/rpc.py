@@ -5,6 +5,7 @@ import multiprocessing as mp
 import traceback
 import time
 import os
+import pickle
 
 from functools import reduce
 from typing import Callable,Dict,List
@@ -19,6 +20,10 @@ DIV = '__DIV__'
 END = '__END__'
 IS_PRIME = '__IS_PRIME__'
 MP_IS_PRIME = '__MP_IS_PRIME'
+CACHE_FILE = './cache/dict.cache'
+REGISTER_NUMBERS = 20
+TIME_LIMIT = 60
+
 
 def receive_complete_message(connection):
     
@@ -41,7 +46,9 @@ class Client:
         self.port = port
         self.conection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.conection.connect((self.ip,self.port))
-        self.cache = {}
+        self.cache = self.read_cache()
+        self.insertion_order = []
+        self.time = 0
 
     def __get_float_resp(self,resp:str) -> float:
         try:
@@ -60,47 +67,43 @@ class Client:
         "args": args
        })
 
-    def sum(self,numbers:tuple) -> float:
-        req = self.__prepare_request(SUM,numbers)
+    def process_request(self,req):
+        
         if req in self.cache:
-            return self.cache[req]
+            response = self.cache[req]
         self.conection.send(req.encode(crpc.ENCODE))
         self.cache[req] = response
-        return self.__get_response()
+        response = self.__get_response()
+
+        self.check_time()
+
+    def sync_dict():
+        pass
+
+    def check_time(self):
+        if time.time() - self.time >= TIME_LIMIT:
+            self.time = time.time()
+
+    def sum(self,numbers:tuple) -> float:
+        req = self.__prepare_request(SUM,numbers)
+        return self.process_request(req)
 
     def subtract(self,numbers:tuple) -> float:
         req = self.__prepare_request(SUB,numbers)
-        if req in self.cache:
-            return self.cache[req]
-        self.conection.send(req.encode(crpc.ENCODE))
-        self.cache[req] = response
-        return self.__get_response()
+        return self.process_request(req)
     
     def divide(self,numbers:tuple) -> float:
         req = self.__prepare_request(DIV,numbers)
-        if req in self.cache:
-            return self.cache[req]
-        self.conection.send(req.encode(crpc.ENCODE))
-        self.cache[req] = response
-        return self.__get_response()
+        return self.process_request(req)
     
     def multiply(self,numbers:tuple) -> float:
         req = self.__prepare_request(MUL,numbers)
-        if req in self.cache:
-            return self.cache[req]        
-        self.conection.send(req.encode(crpc.ENCODE))
-        self.cache[req] = response
-        return self.__get_response()
+        return self.process_request(req)
 
     def is_prime(self,start:int,end:int,step:int) -> List[int]:
         numbers = (start,end,step)
         req = self.__prepare_request(IS_PRIME,numbers)
-        if req in self.cache:
-            return self.cache[req]
-        self.conection.send(req.encode(crpc.ENCODE))
-        response = self.__get_response()
-        self.cache[req] = response
-        return response
+        return self.process_request(req)
         
     def get_cache(self,cache_str:str):
         return self.cache.get(cache_str)
@@ -108,6 +111,19 @@ class Client:
 
     def add_cache(self):
         pass
+    
+    def read_cache(self):
+        try:
+            with open(CACHE_FILE,'rb') as file:
+                cache = pickle.load(file)
+                return cache
+        except TypeError as e:
+            print('O arquivo esta vazio')
+            return {}
+
+    def write_cache(self):
+        with open(CACHE_FILE, 'wb') as file:
+            pickle.dump(self.cache, file)
 
     def __get_response(self):
         response_data = receive_complete_message(self.conection)
@@ -115,6 +131,7 @@ class Client:
 
     def __del__(self) -> str:
         self.conection.send(self.__prepare_request(END,()).encode())
+        write_cache()
         return 
     
     

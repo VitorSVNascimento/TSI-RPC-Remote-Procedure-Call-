@@ -6,13 +6,13 @@ client = Client('127.0.0.1',8000)
 is_prime_list = client.is_prime(10,100001,1)
 
 # prime_numbers = [number for number, is_prime in zip(list_numbers, is_prime_list) if is_prime]
-print(f'Numeros primos {is_prime_list} total = {len(is_prime_list)}')
+#print(f'Numeros primos {is_prime_list} total = {len(is_prime_list)}')
 
 
 is_prime_list = client.is_prime(10,100001,1)
 
 # prime_numbers = [number for number, is_prime in zip(list_numbers, is_prime_list) if is_prime]
-print(f'Numeros primos cache{is_prime_list} total = {len(is_prime_list)}')
+#print(f'Numeros primos cache{is_prime_list} total = {len(is_prime_list)}')
 
 # is_prime_list_mp = client.mp_is_prime(list_numbers)
 # prime_numbers_mp = list(filter(lambda x: x[1], zip(list_numbers, is_prime_list_mp)))
