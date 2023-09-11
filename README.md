@@ -9,10 +9,6 @@ Projeto criado para a disciplina de sistemas distribuidos com o objeto de implem
 A ideia fundamental por trás do RPC é fornecer uma abstração de chamada de função que permite que os desenvolvedores tratem chamadas de função em sistemas distribuídos da mesma forma que tratariam chamadas de função locais. O RPC é usado para criar uma comunicação transparente entre processos ou objetos distribuídos em sistemas distribuídos, permitindo que eles invoquem funções ou métodos uns dos outros, mesmo que estejam em máquinas diferentes.
 
 
-
-
-
-
 ## Atualizações 
 
 ### Atividade 1 - Criação do rpc
@@ -28,4 +24,6 @@ A ideia fundamental por trás do RPC é fornecer uma abstração de chamada de f
 -Implementação de um cache simples através de Dict nas operações criadas 
 
 ### Atividade 4 Implementação de cache
-
+- Implementação de cache em disco através do arquivo dict.cache
+- Sincronização do cache em memória com o cache em disco após tempo limite 
+- Definição de limite de registros em disco e memória
