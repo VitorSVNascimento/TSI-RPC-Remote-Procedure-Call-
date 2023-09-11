@@ -21,7 +21,7 @@ END = '__END__'
 IS_PRIME = '__IS_PRIME__'
 MP_IS_PRIME = '__MP_IS_PRIME'
 CACHE_FILE = './cache/dict.cache'
-REGISTER_NUMBERS = 20
+MAX_REGISTER_IN_CACHE = 3
 TIME_LIMIT = 60
 
 
@@ -47,7 +47,6 @@ class Client:
         self.conection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.conection.connect((self.ip,self.port))
         self.cache = self.read_cache()
-        self.insertion_order = []
         self.time = 0
 
     def __get_float_resp(self,resp:str) -> float:
@@ -68,21 +67,34 @@ class Client:
        })
 
     def process_request(self,req):
-        
+        req_str = json.dumps(req)
+
         if req in self.cache:
+            print('resposta do cache')
             response = self.cache[req]
+            return response
+
         self.conection.send(req.encode(crpc.ENCODE))
-        self.cache[req] = response
         response = self.__get_response()
-
+        
+        self.add_cache_register(req,response)
         self.check_time()
+        print('resposta sem cache')
+        return response
 
-    def sync_dict():
-        pass
+    def add_cache_register(self,req,response):
+        if len(self.cache) == MAX_REGISTER_IN_CACHE:
+            self.remove_oldest_register()
+        self.cache[req] = response
+
+    def remove_oldest_register(self):
+        oldest_register = next(iter(self.cache))
+        del self.cache[oldest_register]
 
     def check_time(self):
         if time.time() - self.time >= TIME_LIMIT:
             self.time = time.time()
+            self.write_cache()
 
     def sum(self,numbers:tuple) -> float:
         req = self.__prepare_request(SUM,numbers)
@@ -104,36 +116,36 @@ class Client:
         numbers = (start,end,step)
         req = self.__prepare_request(IS_PRIME,numbers)
         return self.process_request(req)
-        
-    def get_cache(self,cache_str:str):
-        return self.cache.get(cache_str)
-        pass
 
-    def add_cache(self):
-        pass
-    
     def read_cache(self):
         try:
+            if not os.path.exists(CACHE_FILE):
+                file = open(CACHE_FILE,'w')
+                file.close()
+                return {}
             with open(CACHE_FILE,'rb') as file:
+                if os.path.getsize(CACHE_FILE) == 0:
+                    return {}
                 cache = pickle.load(file)
                 return cache
         except TypeError as e:
             print('O arquivo esta vazio')
+            traceback.print_exc()
             return {}
 
-    def write_cache(self):
-        with open(CACHE_FILE, 'wb') as file:
-            pickle.dump(self.cache, file)
 
     def __get_response(self):
         response_data = receive_complete_message(self.conection)
         return json.loads(response_data.decode(crpc.ENCODE))
 
+    def write_cache(self):
+        with open(CACHE_FILE, 'wb') as file:
+            pickle.dump(self.cache, file)
+
     def __del__(self) -> str:
         self.conection.send(self.__prepare_request(END,()).encode())
-        write_cache()
+        self.write_cache()
         return 
-    
     
 class Server: 
 

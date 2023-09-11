@@ -1,15 +1,21 @@
 from rpc import Client
+import time
 
 client = Client('127.0.0.1',8000)
 
 # list_numbers = [x for x in range(10,1000000)]
-is_prime_list = client.is_prime(10,100001,1)
+
+print(client.sum((70,20)))
+
+
+
+
 
 # prime_numbers = [number for number, is_prime in zip(list_numbers, is_prime_list) if is_prime]
 #print(f'Numeros primos {is_prime_list} total = {len(is_prime_list)}')
 
 
-is_prime_list = client.is_prime(10,100001,1)
+ 
 
 # prime_numbers = [number for number, is_prime in zip(list_numbers, is_prime_list) if is_prime]
 #print(f'Numeros primos cache{is_prime_list} total = {len(is_prime_list)}')

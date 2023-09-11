@@ -27,3 +27,5 @@ A ideia fundamental por trás do RPC é fornecer uma abstração de chamada de f
 ### Atividade 3 Implementação de cache
 -Implementação de um cache simples através de Dict nas operações criadas 
 
+### Atividade 4 Implementação de cache
+
