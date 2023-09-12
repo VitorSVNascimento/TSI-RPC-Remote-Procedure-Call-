@@ -5,10 +5,11 @@ client = Client('127.0.0.1',8000)
 
 # list_numbers = [x for x in range(10,1000000)]
 
-print(client.sum((70,20)))
-
-
-
+# print(client.sum((70,20)))
+# print(client.sum((30,20)))
+# print(client.sum((40,20)))
+# print(client.sum((60,20)))
+print(client.last_news_ifbarbacena(3))
 
 
 # prime_numbers = [number for number, is_prime in zip(list_numbers, is_prime_list) if is_prime]

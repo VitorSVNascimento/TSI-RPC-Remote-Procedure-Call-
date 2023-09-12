@@ -6,6 +6,8 @@ import traceback
 import time
 import os
 import pickle
+import bs4
+import requests
 
 from functools import reduce
 from typing import Callable,Dict,List
@@ -20,9 +22,11 @@ DIV = '__DIV__'
 END = '__END__'
 IS_PRIME = '__IS_PRIME__'
 MP_IS_PRIME = '__MP_IS_PRIME'
+LAST_NEWS = '__LAST_NEWS__'
 CACHE_FILE = './cache/dict.cache'
-MAX_REGISTER_IN_CACHE = 3
-TIME_LIMIT = 60
+URL_NEWS_IF_BQ = 'https://www.ifsudestemg.edu.br/noticias/barbacena/?b_start:int='
+MAX_REGISTER_IN_CACHE = 5
+TIME_LIMIT = 1
 
 
 def receive_complete_message(connection):
@@ -117,6 +121,11 @@ class Client:
         req = self.__prepare_request(IS_PRIME,numbers)
         return self.process_request(req)
 
+    def last_news_ifbarbacena(self,quantity_news:int) -> List:
+        req = self.__prepare_request(LAST_NEWS,quantity_news)
+        return self.process_request(req)
+        pass
+
     def read_cache(self):
         try:
             if not os.path.exists(CACHE_FILE):
@@ -166,6 +175,7 @@ class Server:
             MUL:self.__mul_function,
             DIV:self.__div_function,
             IS_PRIME:self.is_prime_function,
+            LAST_NEWS:self.last_news_ifbarbacena,
         }
 
 
@@ -182,6 +192,10 @@ class Server:
             args = request_data.get("args")
             return tuple(args) if args else None
         except json.JSONDecodeError:
+            return None
+        except TypeError as type:
+            return int(args)
+        except ValueError as vl:
             return None
 
     def __get_operation(self,operation_code:str) -> Callable:
@@ -269,6 +283,17 @@ class Server:
         except:
             traceback.print_exc()
             return None
+
+    def last_news_ifbarbacena(self, news_quantity):
+        
+        req = requests.get(URL_NEWS_IF_BQ+'0')
+        soup = bs4.BeautifulSoup(req.text,'html.parser')
+        
+        news = soup.find('a',{'class':'summary url'})
+        titles = [new.text for new in news]
+        print(titles)
+        return None
+        pass
 
     def make_number_list(self,start: int, end: int, step: int = 1) -> List[int]:
         if step == 0:
