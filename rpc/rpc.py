@@ -74,10 +74,10 @@ class Client:
     def process_request(self,req):
         req_str = json.dumps(req)
 
-        # if req in self.cache:
-        #     print('resposta do cache')
-        #     response = self.cache[req]
-        #     return response
+        if req in self.cache:
+            print('resposta do cache')
+            response = self.cache[req]
+            return response
 
         self.conection.send(req.encode(crpc.ENCODE))
         response = self.__get_response()
