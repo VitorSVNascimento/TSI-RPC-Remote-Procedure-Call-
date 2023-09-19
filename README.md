@@ -27,3 +27,7 @@ A ideia fundamental por trás do RPC é fornecer uma abstração de chamada de f
 - Implementação de cache em disco através do arquivo dict.cache
 - Sincronização do cache em memória com o cache em disco após tempo limite 
 - Definição de limite de registros em disco e memória
+
+### Atividade 5 Implementação de web scraping
+- Implementação do recurso de web scrapring para a busca das noticias mais recentes do site IF Sudeste BQ
+- Adição de multithread para acelerar o processo quando mais de uma página é solicitada
