@@ -10,6 +10,7 @@ import bs4
 import requests
 
 from functools import reduce
+import concurrent.futures as cf
 from typing import Callable,Dict,List
 
 import mathOperations
@@ -73,10 +74,10 @@ class Client:
     def process_request(self,req):
         req_str = json.dumps(req)
 
-        if req in self.cache:
-            print('resposta do cache')
-            response = self.cache[req]
-            return response
+        # if req in self.cache:
+        #     print('resposta do cache')
+        #     response = self.cache[req]
+        #     return response
 
         self.conection.send(req.encode(crpc.ENCODE))
         response = self.__get_response()
@@ -285,16 +286,42 @@ class Server:
             return None
 
     def last_news_ifbarbacena(self, news_quantity):
+        urls = self.make_url_list(news_quantity)
         
-        req = requests.get(URL_NEWS_IF_BQ+'0')
-        soup = bs4.BeautifulSoup(req.text,'html.parser')
+        htmls = self.multithread_get_html_text(urls)
+        headlines = []
         
-        news = soup.find('a',{'class':'summary url'})
-        titles = [new.text for new in news]
-        print(titles)
-        return None
-        pass
+        for html_text in htmls:
+            
+            soup = bs4.BeautifulSoup(html_text,'html.parser')
+            news = soup.find_all('a',{'class':'summary url'})
+            for article in news:
+                headlines.append(article.text)
+                news_quantity-=1
+                if news_quantity == 0:
+                    break
+        return headlines
 
+
+    def make_url_list(self,news_quantity):
+        url_list = []
+        for number in range(news_quantity // 20 + 1):
+            url_list.append(f'{URL_NEWS_IF_BQ}{number * 20}')
+        return url_list
+
+    def get_html_text(self, url):
+        try:
+            return requests.get(url).text
+        except:
+            return None
+
+    def multithread_get_html_text(self,url_list):
+        MAX_THREADS = os.cpu_count()
+        with cf.ThreadPoolExecutor(MAX_THREADS) as executor:
+            htmls = executor.map(self.get_html_text,url_list)
+        
+        return list(htmls)
+    
     def make_number_list(self,start: int, end: int, step: int = 1) -> List[int]:
         if step == 0:
             raise ValueError("O passo não pode ser zero.")
