@@ -52,6 +52,8 @@ class Client:
         self.conection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.conection.connect((self.ip,self.port))
         self.cache = self.read_cache()
+        if 'time' not in self.cache:
+            self.cache['time'] = 0
         self.time = 0
 
     def __get_float_resp(self,resp:str) -> float:
@@ -66,26 +68,52 @@ class Client:
         return numbers_str
     
     def __prepare_request(self,operation_code:str,args:tuple) -> str:
-       return json.dumps({
+       return {
         "operation": operation_code,
         "args": args
-       })
+       }
 
     def process_request(self,req):
         req_str = json.dumps(req)
 
-        if req in self.cache:
-            print('resposta do cache')
-            response = self.cache[req]
-            return response
+        if req['operation'] == LAST_NEWS:
+            cache_news = self.get_last_news_cache(req['args'])
+            if cache_news != None: 
+                print('veio do cache')
+                return cache_news
+        else:
+            if req_str in self.cache:
+                response = self.cache[req_str]
 
-        self.conection.send(req.encode(crpc.ENCODE))
+                return response
+
+        self.conection.send(req_str.encode(crpc.ENCODE))
         response = self.__get_response()
         
-        self.add_cache_register(req,response)
+        if req['operation'] == LAST_NEWS:
+            self.add_cache_register(req['operation'],response)
+        else:    
+            self.add_cache_register(req_str,response)
         self.check_time()
-        print('resposta sem cache')
         return response
+
+    def get_last_news_cache(self,news_quantity):
+        try:
+            if (time.time() - self.cache['time']) >= (5 * 60):
+                del self.cache[LAST_NEWS]
+                self.cache['time'] = time.time()
+                
+                return None
+            if len(self.cache[LAST_NEWS]) < news_quantity:
+                del self.cache[LAST_NEWS]
+                print('Pimba')
+                return None
+            return self.cache[LAST_NEWS][:news_quantity]
+        except:
+            traceback.print_exc()
+            return None
+        pass
+
 
     def add_cache_register(self,req,response):
         if len(self.cache) == MAX_REGISTER_IN_CACHE:
@@ -153,7 +181,7 @@ class Client:
             pickle.dump(self.cache, file)
 
     def __del__(self) -> str:
-        self.conection.send(self.__prepare_request(END,()).encode())
+        self.conection.send(json.dumps(self.__prepare_request(END,())).encode())
         self.write_cache()
         return 
     
