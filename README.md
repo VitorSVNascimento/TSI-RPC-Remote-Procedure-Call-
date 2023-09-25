@@ -31,3 +31,7 @@ A ideia fundamental por trás do RPC é fornecer uma abstração de chamada de f
 ### Atividade 5 Implementação de web scraping
 - Implementação do recurso de web scrapring para a busca das noticias mais recentes do site IF Sudeste BQ
 - Adição de multithread para acelerar o processo quando mais de uma página é solicitada
+
+### Atividade 6 Consistencia e Replicação
+- Adição do mecanismo de cache que aproveita os dados caso o número de notícias solicitadas seja menor que um número previamente solicitado
+- Adição do mecanismo de consistencia com restrição de no máximo 5 minutos
