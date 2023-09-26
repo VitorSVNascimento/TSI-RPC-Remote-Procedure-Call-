@@ -1,3 +1,34 @@
+import rpc_requests as rreq
+import socket
+import threading
+import json
+import multiprocessing as mp
+import traceback
+import time
+import os
+import pickle
+import bs4
+import requests
+
+from functools import reduce
+import concurrent.futures as cf
+from typing import Callable,Dict,List
+
+import mathOperations
+import constRPC as crpc
+
+SUM = '__SUM__'
+SUB = '__SUB__'
+MUL = '__MUL__'
+DIV = '__DIV__'
+END = '__END__'
+IS_PRIME = '__IS_PRIME__'
+MP_IS_PRIME = '__MP_IS_PRIME'
+LAST_NEWS = '__LAST_NEWS__'
+CACHE_FILE = './cache/dict.cache'
+URL_NEWS_IF_BQ = 'https://www.ifsudestemg.edu.br/noticias/barbacena/?b_start:int='
+MAX_REGISTER_IN_CACHE = 5
+TIME_LIMIT = 1
 class Client:
     def __init__(self,ip,port) -> None:
         self.ip = ip
@@ -69,28 +100,28 @@ class Client:
             self.write_cache()
 
     def sum(self,numbers:tuple) -> float:
-        req = self.__prepare_request(SUM,numbers)
+        req = rreq.prepare_request(SUM,numbers)
         return self.process_request(req)
 
     def subtract(self,numbers:tuple) -> float:
-        req = self.__prepare_request(SUB,numbers)
+        req = rreq.prepare_request(SUB,numbers)
         return self.process_request(req)
     
     def divide(self,numbers:tuple) -> float:
-        req = self.__prepare_request(DIV,numbers)
+        req = rreq.prepare_request(DIV,numbers)
         return self.process_request(req)
     
     def multiply(self,numbers:tuple) -> float:
-        req = self.__prepare_request(MUL,numbers)
+        req = rreq.prepare_request(MUL,numbers)
         return self.process_request(req)
 
     def is_prime(self,start:int,end:int,step:int) -> List[int]:
         numbers = (start,end,step)
-        req = self.__prepare_request(IS_PRIME,numbers)
+        req = rreq.prepare_request(IS_PRIME,numbers)
         return self.process_request(req)
 
     def last_news_ifbarbacena(self,quantity_news:int) -> List:
-        req = self.__prepare_request(LAST_NEWS,quantity_news)
+        req = rreq.prepare_request(LAST_NEWS,quantity_news)
         return self.process_request(req)
         pass
 
@@ -112,7 +143,7 @@ class Client:
 
 
     def __get_response(self):
-        response_data = receive_complete_message(self.conection)
+        response_data = rreq.receive_complete_message(self.conection)
         return json.loads(response_data.decode(crpc.ENCODE))
 
     def write_cache(self):
@@ -120,7 +151,7 @@ class Client:
             pickle.dump(self.cache, file)
 
     def __del__(self) -> str:
-        self.conection.send(json.dumps(self.__prepare_request(END,())).encode())
+        self.conection.send(json.dumps(rreq.prepare_request(END,())).encode())
         self.write_cache()
         return 
 

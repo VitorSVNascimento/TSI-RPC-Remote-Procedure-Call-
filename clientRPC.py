@@ -1,7 +1,7 @@
-from rpc import Client
+from rpc import client
 import time
 
-client = Client('127.0.0.1',8000)
+client_rpc = client.Client('127.0.0.1',8000)
 
 # list_numbers = [x for x in range(10,1000000)]
 
@@ -9,8 +9,8 @@ client = Client('127.0.0.1',8000)
 # print(client.sum((30,20)))
 # print(client.sum((40,20)))
 # print(client.sum((60,20)))
-headlines = client.last_news_ifbarbacena(23) 
-headlines = client.last_news_ifbarbacena(5)
+headlines = client_rpc.sum((10,20))
+
 
 
 # prime_numbers = [number for number, is_prime in zip(list_numbers, is_prime_list) if is_prime]
