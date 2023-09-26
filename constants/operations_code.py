@@ -1,0 +1,8 @@
+SUM = '__SUM__'
+SUB = '__SUB__'
+MUL = '__MUL__'
+DIV = '__DIV__'
+END = '__END__'
+IS_PRIME = '__IS_PRIME__'
+MP_IS_PRIME = '__MP_IS_PRIME__'
+LAST_NEWS = '__LAST_NEWS__'

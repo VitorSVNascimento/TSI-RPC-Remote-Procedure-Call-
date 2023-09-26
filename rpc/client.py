@@ -13,22 +13,10 @@ import requests
 from functools import reduce
 import concurrent.futures as cf
 from typing import Callable,Dict,List
+from constants import operations_code as opc,cache_const as cac, files_and_urls as fiu, const_rpc as crpc
 
 import mathOperations
-import constRPC as crpc
 
-SUM = '__SUM__'
-SUB = '__SUB__'
-MUL = '__MUL__'
-DIV = '__DIV__'
-END = '__END__'
-IS_PRIME = '__IS_PRIME__'
-MP_IS_PRIME = '__MP_IS_PRIME'
-LAST_NEWS = '__LAST_NEWS__'
-CACHE_FILE = './cache/dict.cache'
-URL_NEWS_IF_BQ = 'https://www.ifsudestemg.edu.br/noticias/barbacena/?b_start:int='
-MAX_REGISTER_IN_CACHE = 5
-TIME_LIMIT = 1
 class Client:
     def __init__(self,ip,port) -> None:
         self.ip = ip
@@ -59,7 +47,7 @@ class Client:
         self.conection.send(req_str.encode(crpc.ENCODE))
         response = self.__get_response()
         
-        if req['operation'] == LAST_NEWS:
+        if req['operation'] == opc.LAST_NEWS:
             self.add_cache_register(req['operation'],response)
         else:    
             self.add_cache_register(req_str,response)
@@ -70,15 +58,15 @@ class Client:
     def get_last_news_cache(self,news_quantity):
         try:
             if (time.time() - self.cache['time']) >= (5 * 60):
-                if LAST_NEWS in self.cache:
-                    del self.cache[LAST_NEWS]
+                if opc.LAST_NEWS in self.cache:
+                    del self.cache[opc.LAST_NEWS]
                 self.cache['time'] = time.time()
                 
                 return None
-            if len(self.cache[LAST_NEWS]) < news_quantity:
-                del self.cache[LAST_NEWS]
+            if len(self.cache[opc.LAST_NEWS]) < news_quantity:
+                del self.cache[opc.LAST_NEWS]
                 return None
-            return self.cache[LAST_NEWS][:news_quantity]
+            return self.cache[opc.LAST_NEWS][:news_quantity]
         except:
             traceback.print_exc()
             return None

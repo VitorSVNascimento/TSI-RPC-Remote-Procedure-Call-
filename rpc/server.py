@@ -14,21 +14,9 @@ from functools import reduce
 import concurrent.futures as cf
 from typing import Callable,Dict,List
 
+from constants import operations_code as opc,cache_const as cac, files_and_urls as fiu, const_rpc as crpc
 import mathOperations
-import constRPC as crpc
 
-SUM = '__SUM__'
-SUB = '__SUB__'
-MUL = '__MUL__'
-DIV = '__DIV__'
-END = '__END__'
-IS_PRIME = '__IS_PRIME__'
-MP_IS_PRIME = '__MP_IS_PRIME'
-LAST_NEWS = '__LAST_NEWS__'
-CACHE_FILE = './cache/dict.cache'
-URL_NEWS_IF_BQ = 'https://www.ifsudestemg.edu.br/noticias/barbacena/?b_start:int='
-MAX_REGISTER_IN_CACHE = 5
-TIME_LIMIT = 1
 class Server: 
 
     __OPERATION_ARG = 0
@@ -43,12 +31,12 @@ class Server:
 
     def __get_operations_dict(self) -> Dict[str, Callable]:
         return {
-            SUM:self.__sum_function,
-            SUB:self.__sub_function,
-            MUL:self.__mul_function,
-            DIV:self.__div_function,
-            IS_PRIME:self.is_prime_function,
-            LAST_NEWS:self.last_news_ifbarbacena,
+            opc.SUM:self.__sum_function,
+            opc.SUB:self.__sub_function,
+            opc.MUL:self.__mul_function,
+            opc.DIV:self.__div_function,
+            opc.IS_PRIME:self.is_prime_function,
+            opc.LAST_NEWS:self.last_news_ifbarbacena,
         }
 
 
