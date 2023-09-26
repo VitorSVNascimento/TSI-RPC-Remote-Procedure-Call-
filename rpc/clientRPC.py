@@ -9,11 +9,8 @@ client = Client('127.0.0.1',8000)
 # print(client.sum((30,20)))
 # print(client.sum((40,20)))
 # print(client.sum((60,20)))
-headlines = client.last_news_ifbarbacena(43) 
-_ = 1
-for headline in headlines:
-    print(f'{_}-{headline}')
-    _+=1
+headlines = client.last_news_ifbarbacena(23) 
+headlines = client.last_news_ifbarbacena(5)
 
 
 # prime_numbers = [number for number, is_prime in zip(list_numbers, is_prime_list) if is_prime]

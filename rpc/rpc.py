@@ -95,18 +95,19 @@ class Client:
         else:    
             self.add_cache_register(req_str,response)
         self.check_time()
+        print('nao veio do cache')
         return response
 
     def get_last_news_cache(self,news_quantity):
         try:
             if (time.time() - self.cache['time']) >= (5 * 60):
-                del self.cache[LAST_NEWS]
+                if LAST_NEWS in self.cache:
+                    del self.cache[LAST_NEWS]
                 self.cache['time'] = time.time()
                 
                 return None
             if len(self.cache[LAST_NEWS]) < news_quantity:
                 del self.cache[LAST_NEWS]
-                print('Pimba')
                 return None
             return self.cache[LAST_NEWS][:news_quantity]
         except:
