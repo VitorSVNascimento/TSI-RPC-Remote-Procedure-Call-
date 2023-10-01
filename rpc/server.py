@@ -15,21 +15,62 @@ import concurrent.futures as cf
 from typing import Callable,Dict,List
 
 from constants import operations_code as opc,cache_const as cac, files_and_urls as fiu, const_rpc as crpc
+import connections as cnn
 import mathOperations
 
 class Server: 
-
-    __OPERATION_ARG = 0
-    __FIRST_ARG = 1
 
     def __init__(self,ip,port) -> None:
         self.ip = ip
         self.port = port
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.operations = self.__get_operations_dict()
+        self.operations = self.get_operations_dict()
 
-    def __get_operations_dict(self) -> Dict[str, Callable]:
+    def start(self) -> None:
+        
+        cnn.make_listen(self)
+        print('aguardando conexões')
+        while True:
+            cnn.listen_connection(self)
+    
+
+    def client_loop(self,addr,conn):
+       print(f'Conexão estabelecida com {addr}')
+       with conn:
+            try:
+                while self.handle_client(addr,conn):
+                    pass
+            except Exception as e:
+                traceback.print_exc()
+                print("Error:", e)
+            print(f'Conexão finalizada com {addr}')
+
+    def handle_client(self,addr,conn):
+        req = rreq.receive_complete_message(conn).decode(crpc.ENCODE)
+
+        operation_code,args = rreq.extract_operations_and_arguments(req)
+        
+        if operation_code == opc.END:
+            conn.close()
+            return False
+        operation = self.get_operation(operation_code)
+
+        if operation is None:
+            print('operação inxestente')
+
+        result_str = self.get_result_of_operation(operation,args)
+
+        conn.send(result_str.encode())
+        return True
+
+    def get_result_of_operation(self,operation:Callable,args)->str:
+        try:
+            return json.dumps(operation(args))
+        except Exception:
+            return None
+
+    def get_operations_dict(self) -> Dict[str, Callable]:
         return {
             opc.SUM:self.__sum_function,
             opc.SUB:self.__sub_function,
@@ -39,30 +80,15 @@ class Server:
             opc.LAST_NEWS:self.last_news_ifbarbacena,
         }
 
-
     def get_operation_code(self, req: str) -> str:
         try:
             request_data = json.loads(req)
-            return request_data.get("operation")
+            return request_data.get(opc.OPERATION_KEY)
         except json.JSONDecodeError:
             return None
     
-    def get_argument_tuple(self, req: str) -> tuple:
-        try:
-            request_data = json.loads(req)
-            args = request_data.get("args")
-            return tuple(args) if args else None
-        except json.JSONDecodeError:
-            return None
-        except TypeError as type:
-            return int(args)
-        except ValueError as vl:
-            return None
-
-    def __get_operation(self,operation_code:str) -> Callable:
+    def get_operation(self,operation_code:str) -> Callable:
         return self.operations.get(operation_code,lambda *args:None)
-
-
 
     def __sum_function(self,numbers:tuple) -> float:
         try:
@@ -190,40 +216,3 @@ class Server:
             return [i for i in range(start, end + 1, step)]
         else:
             return [i for i in range(start, end - 1, step)]
-
-    
-    def _handle_client(self,addr,conn):
-       print(f'Conexão estabelecida com {addr}')
-       with conn:
-            try:
-                while True:
-                    req = rreq.receive_complete_message(conn).decode(crpc.ENCODE)
-
-                    operation_code = self.get_operation_code(req)
-                    if operation_code == END:
-                        conn.close()
-                        break
-                    args = self.get_argument_tuple(req)
-                    operation = self.__get_operation(operation_code)
-
-                    if operation is None:
-                        continue
-                    result = operation(args)
-                    result_str = json.dumps(result)
-
-                    conn.send(result_str.encode())
-            except Exception as e:
-                traceback.print_exc()
-                print("Error:", e)
-            print(f'Conexão finalizada com {addr}')
-
-    def start(self) -> None:
-        
-        self.server_socket.bind((self.ip, self.port))
-        self.server_socket.listen()
-        print('aguardando conexões')
-
-        while True:
-            conn,addr = self.server_socket.accept()
-            cliente = mp.Process(target=self._handle_client,args=(addr,conn))
-            cliente.start()

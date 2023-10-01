@@ -1,4 +1,4 @@
-import constRPC as crpc
+from constants import const_rpc as crpc
 
 def numbrer_is_prime(number:int) -> bool:
     try:

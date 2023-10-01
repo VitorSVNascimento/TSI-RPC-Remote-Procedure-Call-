@@ -33,7 +33,7 @@ class Client:
     def process_request(self,req):
         req_str = json.dumps(req)
 
-        if req['operation'] == LAST_NEWS:
+        if req['operation'] == opc.LAST_NEWS:
             cache_news = self.get_last_news_cache(req['args'])
             if cache_news != None: 
                 print('veio do cache')
@@ -74,7 +74,7 @@ class Client:
 
 
     def add_cache_register(self,req,response):
-        if len(self.cache) == MAX_REGISTER_IN_CACHE:
+        if len(self.cache) == cac.MAX_REGISTER_IN_CACHE:
             self.remove_oldest_register()
         self.cache[req] = response
 
@@ -83,44 +83,44 @@ class Client:
         del self.cache[oldest_register]
 
     def check_time(self):
-        if time.time() - self.time >= TIME_LIMIT:
+        if time.time() - self.time >= cac.TIME_LIMIT:
             self.time = time.time()
             self.write_cache()
 
     def sum(self,numbers:tuple) -> float:
-        req = rreq.prepare_request(SUM,numbers)
+        req = rreq.prepare_request(opc.SUM,numbers)
         return self.process_request(req)
 
     def subtract(self,numbers:tuple) -> float:
-        req = rreq.prepare_request(SUB,numbers)
+        req = rreq.prepare_request(opc.SUB,numbers)
         return self.process_request(req)
     
     def divide(self,numbers:tuple) -> float:
-        req = rreq.prepare_request(DIV,numbers)
+        req = rreq.prepare_request(opc.DIV,numbers)
         return self.process_request(req)
     
     def multiply(self,numbers:tuple) -> float:
-        req = rreq.prepare_request(MUL,numbers)
+        req = rreq.prepare_request(opc.MUL,numbers)
         return self.process_request(req)
 
     def is_prime(self,start:int,end:int,step:int) -> List[int]:
         numbers = (start,end,step)
-        req = rreq.prepare_request(IS_PRIME,numbers)
+        req = rreq.prepare_request(opc.IS_PRIME,numbers)
         return self.process_request(req)
 
     def last_news_ifbarbacena(self,quantity_news:int) -> List:
-        req = rreq.prepare_request(LAST_NEWS,quantity_news)
+        req = rreq.prepare_request(opc.LAST_NEWS,quantity_news)
         return self.process_request(req)
         pass
 
     def read_cache(self):
         try:
-            if not os.path.exists(CACHE_FILE):
-                file = open(CACHE_FILE,'w')
+            if not os.path.exists(fiu.CACHE_FILE):
+                file = open(fiu.CACHE_FILE,'w')
                 file.close()
                 return {}
-            with open(CACHE_FILE,'rb') as file:
-                if os.path.getsize(CACHE_FILE) == 0:
+            with open(fiu.CACHE_FILE,'rb') as file:
+                if os.path.getsize(fiu.CACHE_FILE) == 0:
                     return {}
                 cache = pickle.load(file)
                 return cache
@@ -135,11 +135,11 @@ class Client:
         return json.loads(response_data.decode(crpc.ENCODE))
 
     def write_cache(self):
-        with open(CACHE_FILE, 'wb') as file:
+        with open(fiu.CACHE_FILE, 'wb') as file:
             pickle.dump(self.cache, file)
 
     def __del__(self) -> str:
-        self.conection.send(json.dumps(rreq.prepare_request(END,())).encode())
+        self.conection.send(json.dumps(rreq.prepare_request(opc.END,())).encode())
         self.write_cache()
         return 
 
