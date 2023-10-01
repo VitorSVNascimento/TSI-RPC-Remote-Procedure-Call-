@@ -28,8 +28,6 @@ class Client:
             self.cache['time'] = 0
         self.time = 0
     
-
-
     def process_request(self,req):
         req_str = json.dumps(req)
 

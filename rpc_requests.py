@@ -24,8 +24,6 @@ def extract_operations_and_arguments(req:str):
         request_data = json.loads(req)
         return get_operation_code(request_data),get_arguments(request_data)
 
-
-
 def get_operation_code(request_data:dict) -> str:
     try:
         return request_data[opc.OPERATION_KEY]

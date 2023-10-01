@@ -66,37 +66,32 @@ class Server:
 
     def get_result_of_operation(self,operation:Callable,args)->str:
         try:
+            result = operation(args)
             return json.dumps(operation(args))
         except Exception:
+            traceback.print_exc()
             return None
 
     def get_operations_dict(self) -> Dict[str, Callable]:
         return {
-            opc.SUM:self.__sum_function,
-            opc.SUB:self.__sub_function,
-            opc.MUL:self.__mul_function,
-            opc.DIV:self.__div_function,
+            opc.SUM:self.sum_function,
+            opc.SUB:self.sub_function,
+            opc.MUL:self.mul_function,
+            opc.DIV:self.div_function,
             opc.IS_PRIME:self.is_prime_function,
             opc.LAST_NEWS:self.last_news_ifbarbacena,
         }
-
-    def get_operation_code(self, req: str) -> str:
-        try:
-            request_data = json.loads(req)
-            return request_data.get(opc.OPERATION_KEY)
-        except json.JSONDecodeError:
-            return None
     
     def get_operation(self,operation_code:str) -> Callable:
         return self.operations.get(operation_code,lambda *args:None)
 
-    def __sum_function(self,numbers:tuple) -> float:
+    def sum_function(self,numbers:tuple) -> float:
         try:
             return sum(tuple(map(float,numbers)))
         except:
             return None
     
-    def __sub_function(self,numbers:tuple) -> float:
+    def sub_function(self,numbers:tuple) -> float:
         try:
             if len(numbers) == 1:
                 return numbers[0]
@@ -106,14 +101,14 @@ class Server:
         except:
             return None
     
-    def __mul_function(self,numbers:tuple) -> float:
+    def mul_function(self,numbers:tuple) -> float:
         try:
             return reduce(lambda x, y: x * y, map(float,numbers))
         except:
             return None
     
     
-    def __div_function(self,numbers:tuple) -> float:
+    def div_function(self,numbers:tuple) -> float:
         try:
             return reduce(lambda x, y: x / y, map(float,numbers))
         except:
@@ -192,7 +187,7 @@ class Server:
     def make_url_list(self,news_quantity):
         url_list = []
         for number in range(news_quantity // 20 + 1):
-            url_list.append(f'{URL_NEWS_IF_BQ}{number * 20}')
+            url_list.append(f'{fiu.URL_NEWS_IF_BQ}{number * 20}')
         return url_list
 
     def get_html_text(self, url):
