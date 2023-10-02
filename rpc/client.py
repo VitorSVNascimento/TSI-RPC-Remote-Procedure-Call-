@@ -1,4 +1,3 @@
-import rpc_requests as rreq
 import socket
 import threading
 import json
@@ -9,13 +8,15 @@ import os
 import pickle
 import bs4
 import requests
-
-from functools import reduce
 import concurrent.futures as cf
-from typing import Callable,Dict,List
+
+import rpc_requests as rreq
+import mathOperations
 from constants import operations_code as opc,cache_const as cac, files_and_urls as fiu, const_rpc as crpc
 
-import mathOperations
+from functools import reduce
+from typing import Callable,Dict,List
+
 
 class Client:
     def __init__(self,ip,port) -> None:
@@ -24,15 +25,15 @@ class Client:
         self.conection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.conection.connect((self.ip,self.port))
         self.cache = self.read_cache()
-        if 'time' not in self.cache:
-            self.cache['time'] = 0
+        if cac.TIME_KEY not in self.cache:
+            self.cache[cac.TIME_KEY] = 0
         self.time = 0
     
     def process_request(self,req):
         req_str = json.dumps(req)
 
-        if req['operation'] == opc.LAST_NEWS:
-            cache_news = self.get_last_news_cache(req['args'])
+        if req[opc.OPERATION_KEY] == opc.LAST_NEWS:
+            cache_news = self.get_last_news_cache(req[opc.ARGS_KEY])
             if cache_news != None: 
                 print('veio do cache')
                 return cache_news
@@ -43,10 +44,10 @@ class Client:
                 return response
 
         self.conection.send(req_str.encode(crpc.ENCODE))
-        response = self.__get_response()
+        response = self.get_response()
         
-        if req['operation'] == opc.LAST_NEWS:
-            self.add_cache_register(req['operation'],response)
+        if req[opc.OPERATION_KEY] == opc.LAST_NEWS:
+            self.add_cache_register(req[opc.OPERATION_KEY],response)
         else:    
             self.add_cache_register(req_str,response)
         self.check_time()
@@ -55,16 +56,17 @@ class Client:
 
     def get_last_news_cache(self,news_quantity):
         try:
-            if (time.time() - self.cache['time']) >= (5 * 60):
-                if opc.LAST_NEWS in self.cache:
-                    del self.cache[opc.LAST_NEWS]
-                self.cache['time'] = time.time()
+            if opc.LAST_NEWS in self.cache:
+                if (time.time() - self.cache[cac.TIME_KEY]) >= (5 * 60):
+                        del self.cache[opc.LAST_NEWS]
+                self.cache[cac.TIME_KEY] = time.time()
+                    
+                return None
                 
-                return None
-            if len(self.cache[opc.LAST_NEWS]) < news_quantity:
-                del self.cache[opc.LAST_NEWS]
-                return None
-            return self.cache[opc.LAST_NEWS][:news_quantity]
+                if len(self.cache[opc.LAST_NEWS]) < news_quantity:
+                    del self.cache[opc.LAST_NEWS]
+                    return None
+                return self.cache[opc.LAST_NEWS][:news_quantity]
         except:
             traceback.print_exc()
             return None
@@ -114,10 +116,10 @@ class Client:
     def read_cache(self):
         try:
             if not os.path.exists(fiu.CACHE_FILE):
-                file = open(fiu.CACHE_FILE,'w')
+                file = open(fiu.CACHE_FILE,crpc.WRITE_MODE)
                 file.close()
                 return {}
-            with open(fiu.CACHE_FILE,'rb') as file:
+            with open(fiu.CACHE_FILE,crpc.BINARY_READ_MODE) as file:
                 if os.path.getsize(fiu.CACHE_FILE) == 0:
                     return {}
                 cache = pickle.load(file)
@@ -128,12 +130,12 @@ class Client:
             return {}
 
 
-    def __get_response(self):
+    def get_response(self):
         response_data = rreq.receive_complete_message(self.conection)
         return json.loads(response_data.decode(crpc.ENCODE))
 
     def write_cache(self):
-        with open(fiu.CACHE_FILE, 'wb') as file:
+        with open(fiu.CACHE_FILE, crpc.BINARY_WRITE_MODE) as file:
             pickle.dump(self.cache, file)
 
     def __del__(self) -> str:

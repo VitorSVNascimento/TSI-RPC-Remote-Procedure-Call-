@@ -4,7 +4,8 @@ import time
 client_rpc = client.Client('127.0.0.1',8000)
 
 
-headlines = client_rpc.last_news_ifbarbacena(40)
+headlines = client_rpc.sum((10,10))
+# headlines = client_rpc.sum((20,10))
 print(headlines)
 
 

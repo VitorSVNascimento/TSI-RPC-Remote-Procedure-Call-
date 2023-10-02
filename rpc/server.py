@@ -23,16 +23,15 @@ class Server:
     def __init__(self,ip,port) -> None:
         self.ip = ip
         self.port = port
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server_socket = cnn.make_server_connection(self.ip,self.port,True)
         self.operations = self.get_operations_dict()
 
     def start(self) -> None:
         
-        cnn.make_listen(self)
         print('aguardando conexões')
         while True:
-            cnn.listen_connection(self)
+            conn,addr = cnn.accept_conection(self)
+            cnn.make_client_thread_in_server(self,self.client_loop,addr,conn)
     
 
     def client_loop(self,addr,conn):
@@ -60,7 +59,7 @@ class Server:
             print('operação inxestente')
 
         result_str = self.get_result_of_operation(operation,args)
-
+        time.sleep(10)
         conn.send(result_str.encode())
         return True
 
