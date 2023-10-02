@@ -59,7 +59,6 @@ class Server:
             print('operação inxestente')
 
         result_str = self.get_result_of_operation(operation,args)
-        time.sleep(10)
         conn.send(result_str.encode())
         return True
 

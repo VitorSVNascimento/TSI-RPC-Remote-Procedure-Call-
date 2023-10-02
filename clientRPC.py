@@ -5,7 +5,7 @@ client_rpc = client.Client('127.0.0.1',8000)
 
 
 headlines = client_rpc.sum((10,10))
-# headlines = client_rpc.sum((20,10))
+headlines = client_rpc.sum((40,10))
 print(headlines)
 
 
@@ -13,7 +13,6 @@ print(headlines)
 #print(f'Numeros primos {is_prime_list} total = {len(is_prime_list)}')
 
 
- 
 
 # prime_numbers = [number for number, is_prime in zip(list_numbers, is_prime_list) if is_prime]
 #print(f'Numeros primos cache{is_prime_list} total = {len(is_prime_list)}')

@@ -1,0 +1,1 @@
+mudei o nome de read_cache para get_cache

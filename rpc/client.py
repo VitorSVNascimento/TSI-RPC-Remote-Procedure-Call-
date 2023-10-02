@@ -12,6 +12,7 @@ import concurrent.futures as cf
 
 import rpc_requests as rreq
 import mathOperations
+import cache_rpc
 from constants import operations_code as opc,cache_const as cac, files_and_urls as fiu, const_rpc as crpc
 
 from functools import reduce
@@ -24,9 +25,9 @@ class Client:
         self.port = port
         self.conection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.conection.connect((self.ip,self.port))
-        self.cache = self.read_cache()
-        if cac.TIME_KEY not in self.cache:
-            self.cache[cac.TIME_KEY] = 0
+        self.cache = cache_rpc.get_cache()
+        print(self.cache)
+        cache_rpc.create_time_key_cache(self.cache)
         self.time = 0
     
     def process_request(self,req):
@@ -40,7 +41,7 @@ class Client:
         else:
             if req_str in self.cache:
                 response = self.cache[req_str]
-
+                print('veio do cache')
                 return response
 
         self.conection.send(req_str.encode(crpc.ENCODE))
@@ -53,6 +54,8 @@ class Client:
         self.check_time()
         print('nao veio do cache')
         return response
+    
+    
 
     def get_last_news_cache(self,news_quantity):
         try:
@@ -67,6 +70,7 @@ class Client:
                     del self.cache[opc.LAST_NEWS]
                     return None
                 return self.cache[opc.LAST_NEWS][:news_quantity]
+            return None
         except:
             traceback.print_exc()
             return None
@@ -85,7 +89,7 @@ class Client:
     def check_time(self):
         if time.time() - self.time >= cac.TIME_LIMIT:
             self.time = time.time()
-            self.write_cache()
+            cache_rpc.write_cache(self.cache)
 
     def sum(self,numbers:tuple) -> float:
         req = rreq.prepare_request(opc.SUM,numbers)
@@ -113,35 +117,11 @@ class Client:
         return self.process_request(req)
         pass
 
-    def read_cache(self):
-        try:
-            if not os.path.exists(fiu.CACHE_FILE):
-                file = open(fiu.CACHE_FILE,crpc.WRITE_MODE)
-                file.close()
-                return {}
-            with open(fiu.CACHE_FILE,crpc.BINARY_READ_MODE) as file:
-                if os.path.getsize(fiu.CACHE_FILE) == 0:
-                    return {}
-                cache = pickle.load(file)
-                return cache
-        except TypeError as e:
-            print('O arquivo esta vazio')
-            traceback.print_exc()
-            return {}
-
-
     def get_response(self):
         response_data = rreq.receive_complete_message(self.conection)
         return json.loads(response_data.decode(crpc.ENCODE))
 
-    def write_cache(self):
-        with open(fiu.CACHE_FILE, crpc.BINARY_WRITE_MODE) as file:
-            pickle.dump(self.cache, file)
-
     def __del__(self) -> str:
         self.conection.send(json.dumps(rreq.prepare_request(opc.END,())).encode())
-        self.write_cache()
+        cache_rpc.write_cache(self.cache)
         return 
-
-
-    pass
