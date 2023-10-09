@@ -1,11 +1,9 @@
 from rpc import client
-import time
 
-client_rpc = client.Client('127.0.0.1',8000)
+client_rpc = client.Client('127.0.0.1',8888)
 
 
-headlines = client_rpc.sum((10,10))
-headlines = client_rpc.sum((40,10))
+headlines = client_rpc.last_news_ifbarbacena(10)
 print(headlines)
 
 

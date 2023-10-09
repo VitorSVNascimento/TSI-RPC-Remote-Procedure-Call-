@@ -28,7 +28,6 @@ def read_cache(cache_file,cache_url:str = fiu.CACHE_FILE):
     return cache
 
 def create_time_key_cache(cache:Dict):
-    print(cache)
     if cac.TIME_KEY not in cache:
         cache[cac.TIME_KEY] = 0
 

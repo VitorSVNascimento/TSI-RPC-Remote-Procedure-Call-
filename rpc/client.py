@@ -18,17 +18,69 @@ from constants import operations_code as opc,cache_const as cac, files_and_urls 
 from functools import reduce
 from typing import Callable,Dict,List
 
-
+import connections as cnn
+import inspect
+import random
 class Client:
     def __init__(self,ip,port) -> None:
         self.ip = ip
         self.port = port
-        self.conection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.conection.connect((self.ip,self.port))
+        self.name_server_socket = cnn.make_client_connection(ip,port,False)
+        self.time_out_name_server_count = 0
+        self.conection = None
         self.cache = cache_rpc.get_cache()
-        print(self.cache)
         cache_rpc.create_time_key_cache(self.cache)
         self.time = 0
+    
+    def intercept(func):
+        def wrapper(*args, **kwargs):
+            self_instance = args[0]
+            caller_name = func.__name__
+
+            self_instance.get_connection_server(caller_name)
+            response = func(*args,**kwargs)
+
+            self_instance.disconnect_server()
+            return response
+        return wrapper
+
+    def get_connection_server(self,function_name):
+        LIMIT_ATTEMPS = 10
+        attemps = 0
+        while True:
+
+            hosts = self.get_hosts_list(function_name)
+            attemps+=1
+            if hosts == None and attemps > LIMIT_ATTEMPS:
+                return None
+            if(len(hosts) == 0):
+                return None
+            self.connect_to_server(hosts)
+            return
+        pass
+
+    def get_hosts_list(self,function_name):
+        self.name_server_socket.settimeout(1.0)
+        self.name_server_socket.sendto(function_name.encode(),(self.ip,self.port))
+
+        try:
+            data = self.name_server_socket.recv(crpc.BUFFER_SIZE)
+            data_json = json.loads(data.decode())['response']
+            self.time_out_name_server_count = 0
+            return data_json
+        except:
+            return None
+
+    def connect_to_server(self,hosts):
+        print(hosts)
+        server = random.choice(hosts)
+        server_ip = server[0]
+        server_port = server[1]
+        self.conection = cnn.make_client_connection(server_ip,server_port)
+        return
+        
+    def disconnect_server(self):
+        self.conection.send(json.dumps(rreq.prepare_request(opc.END,())).encode())
     
     def process_request(self,req):
         req_str = json.dumps(req)
@@ -91,27 +143,35 @@ class Client:
             self.time = time.time()
             cache_rpc.write_cache(self.cache)
 
+    @intercept
     def sum(self,numbers:tuple) -> float:
+        # print(self.port)
+        # return 1+1
         req = rreq.prepare_request(opc.SUM,numbers)
         return self.process_request(req)
 
+    @intercept
     def subtract(self,numbers:tuple) -> float:
         req = rreq.prepare_request(opc.SUB,numbers)
         return self.process_request(req)
     
+    @intercept
     def divide(self,numbers:tuple) -> float:
         req = rreq.prepare_request(opc.DIV,numbers)
         return self.process_request(req)
     
+    @intercept
     def multiply(self,numbers:tuple) -> float:
         req = rreq.prepare_request(opc.MUL,numbers)
         return self.process_request(req)
 
+    @intercept
     def is_prime(self,start:int,end:int,step:int) -> List[int]:
         numbers = (start,end,step)
         req = rreq.prepare_request(opc.IS_PRIME,numbers)
         return self.process_request(req)
 
+    @intercept
     def last_news_ifbarbacena(self,quantity_news:int) -> List:
         req = rreq.prepare_request(opc.LAST_NEWS,quantity_news)
         return self.process_request(req)
@@ -122,6 +182,5 @@ class Client:
         return json.loads(response_data.decode(crpc.ENCODE))
 
     def __del__(self) -> str:
-        self.conection.send(json.dumps(rreq.prepare_request(opc.END,())).encode())
         cache_rpc.write_cache(self.cache)
         return 

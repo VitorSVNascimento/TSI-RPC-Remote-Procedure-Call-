@@ -31,5 +31,5 @@ def make_client_connection(server_ip:str=LOCAL_HOST,server_port:int=DEFAULT_PORT
     client_conection = crate_socket(is_tcp)
     if is_tcp:
         client_conection.connect((server_ip,server_port))
-    pass
+    return client_conection
 
