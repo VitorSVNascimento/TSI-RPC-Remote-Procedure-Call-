@@ -1,1 +1,3 @@
-mudei o nome de read_cache para get_cache
+Sistema de log para auditoria: em um único arquivo texto (por servidor de operações), 
+armazenar para cada requisição recebida (em uma linha): timestamp, IP do cliente, nome da operação, tempo de resposta.
+

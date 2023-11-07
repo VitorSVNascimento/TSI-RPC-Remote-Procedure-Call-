@@ -3,6 +3,7 @@ import json
 import multiprocessing as mp
 import traceback
 import time
+import datetime
 import os
 import bs4
 import requests
@@ -45,7 +46,7 @@ class Server:
             print(f'Conexão finalizada com {addr}')
 
     def handle_client(self,addr,conn):
-        start_time = time.time()
+        start_time = datetime.datetime.now()
         req = rreq.receive_complete_message(conn).decode(crpc.ENCODE)
 
         operation_code,args = rreq.extract_operations_and_arguments(req)
@@ -57,11 +58,12 @@ class Server:
 
         if operation is None:
             print('operação inxestente')
+            return True
 
         result_str = self.get_result_of_operation(operation,args)
         conn.send(result_str.encode())
-        end_time = time.time()
-        self.write_log(addr,time.time(),operation,end_time-start_time)
+        end_time = datetime.datetime.now()
+        self.write_log(addr,datetime.datetime.now(),operation,end_time-start_time)
         return True
 
     def get_result_of_operation(self,operation:Callable,args)->str:
@@ -260,7 +262,7 @@ class Server:
 
         return True
     
-    def write_log(self,cliente_addr,timestamp,operation,response_time):
+    def write_log(self,cliente_addr,timestamp,operation,response_time:datetime.datetime):
         print('chegou')
-        with open('server.log','w') as file_log:
-            file_log.write(f'{cliente_addr}| {timestamp} | {operation} | {response_time}')
+        with open('server.log','a') as file_log:
+            file_log.write(f'{timestamp},{cliente_addr[0]},{operation.__name__},{response_time.microseconds/1000}ms\n')

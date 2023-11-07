@@ -2,7 +2,8 @@ from rpc import client
 
 client_rpc = client.Client('127.0.0.1',8888)
 
-print(client_rpc.validate_cpf('12017022675'))
+print(client_rpc.validate_cpf('234324'))
+print(client_rpc.subtract((10,10)))
 
 # print(client_rpc.subtract((10,10)))
 # print(client_rpc.divide((10,10)))
