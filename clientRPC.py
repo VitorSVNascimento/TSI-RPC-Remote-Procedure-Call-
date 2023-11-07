@@ -2,12 +2,10 @@ from rpc import client
 
 client_rpc = client.Client('127.0.0.1',8888)
 
-print(client_rpc.validate_cpf('234324'))
-print(client_rpc.subtract((10,10)))
-
 # print(client_rpc.subtract((10,10)))
-# print(client_rpc.divide((10,10)))
-# print(client_rpc.multiply((10,10)))
+client_rpc.divide((10,10))
+client_rpc.multiply((10,10))
+client_rpc.is_prime(10,100000,1)
 
 # prime_numbers = [number for number, is_prime in zip(list_numbers, is_prime_list) if is_prime]
 #print(f'Numeros primos {is_prime_list} total = {len(is_prime_list)}')
