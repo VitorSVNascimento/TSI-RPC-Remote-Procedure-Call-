@@ -16,12 +16,12 @@ class NameServer:
 
     def __get_operation_dict(self) -> Dict:
         return {
-            'sum' : [('127.0.0.1',8000)],
+            'sum' : [('127.0.0.1',8000),('127.0.0.1',8000)],
             'subtract' : [('127.0.0.1',8000)],
             'divide' : [('127.0.0.1',8000)],
-            'multiply' : [('127.0.0.1',8000)],
             'is_prime' : [('127.0.0.1',8000)],
             'last_news_ifbarbacena' : [('127.0.0.1',8000)],
+            'validate_cpf':[('127.0.0.1',8000)]
         }
     
     def start(self):

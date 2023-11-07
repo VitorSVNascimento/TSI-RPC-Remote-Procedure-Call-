@@ -1,12 +1,9 @@
 import rpc_requests as rreq
-import socket
-import threading
 import json
 import multiprocessing as mp
 import traceback
 import time
 import os
-import pickle
 import bs4
 import requests
 
@@ -17,6 +14,8 @@ from typing import Callable,Dict,List
 from constants import operations_code as opc,cache_const as cac, files_and_urls as fiu, const_rpc as crpc
 import connections as cnn
 import mathOperations
+
+import re
 
 class Server: 
 
@@ -46,6 +45,7 @@ class Server:
             print(f'Conexão finalizada com {addr}')
 
     def handle_client(self,addr,conn):
+        start_time = time.time()
         req = rreq.receive_complete_message(conn).decode(crpc.ENCODE)
 
         operation_code,args = rreq.extract_operations_and_arguments(req)
@@ -60,6 +60,8 @@ class Server:
 
         result_str = self.get_result_of_operation(operation,args)
         conn.send(result_str.encode())
+        end_time = time.time()
+        self.write_log(addr,time.time(),operation,end_time-start_time)
         return True
 
     def get_result_of_operation(self,operation:Callable,args)->str:
@@ -78,6 +80,7 @@ class Server:
             opc.DIV:self.div_function,
             opc.IS_PRIME:self.is_prime_function,
             opc.LAST_NEWS:self.last_news_ifbarbacena,
+            opc.VALIDATE_CPF:self.validate_cpf
         }
     
     def get_operation(self,operation_code:str) -> Callable:
@@ -97,8 +100,7 @@ class Server:
             result = float(numbers[0]) -sum(map(float,numbers[1:]))
             return result
         except:
-            return None
-    
+            return None            
     def mul_function(self,numbers:tuple) -> float:
         try:
             return reduce(lambda x, y: x * y, map(float,numbers))
@@ -142,7 +144,6 @@ class Server:
         except:
             traceback.print_exc()
             return None
-        pass
 
     def multiprocessing_is_prime_function(self, numbers:tuple) -> List[int]:
         try:
@@ -209,3 +210,57 @@ class Server:
             return [i for i in range(start, end + 1, step)]
         else:
             return [i for i in range(start, end - 1, step)]
+        
+    def validate_cpf(self,cpf: str) -> bool:
+
+        """ Efetua a validação do CPF, tanto formatação quando dígito verificadores.
+
+        Parâmetros:
+            cpf (str): CPF a ser validado
+
+        Retorno:
+            bool:
+                - Falso, quando o CPF não possuir o formato 999.999.999-99;
+                - Falso, quando o CPF não possuir 11 caracteres numéricos;
+                - Falso, quando os dígitos verificadores forem inválidos;
+                - Verdadeiro, caso contrário.
+
+        Exemplos:
+
+        >>> validate('529.982.247-25')
+        True
+        >>> validate('52998224725')
+        True
+        >>> validate('111.111.111-11')
+        False
+        """
+
+        # Verifica a formatação do CPF
+        if not re.match(r'\d{3}\.?\d{3}\.?\d{3}-?\d{2}', cpf):
+            return False
+
+        # Obtém apenas os números do CPF, ignorando pontuações
+        numbers = [int(digit) for digit in cpf if digit.isdigit()]
+
+        # Verifica se o CPF possui 11 números ou se todos são iguais:
+        if len(numbers) != 11 or len(set(numbers)) == 1:
+            return False
+
+        # Validação do primeiro dígito verificador:
+        sum_of_products = sum(a*b for a, b in zip(numbers[0:9], range(10, 1, -1)))
+        expected_digit = (sum_of_products * 10 % 11) % 10
+        if numbers[9] != expected_digit:
+            return False
+
+        # Validação do segundo dígito verificador:
+        sum_of_products = sum(a*b for a, b in zip(numbers[0:10], range(11, 1, -1)))
+        expected_digit = (sum_of_products * 10 % 11) % 10
+        if numbers[10] != expected_digit:
+            return False
+
+        return True
+    
+    def write_log(self,cliente_addr,timestamp,operation,response_time):
+        print('chegou')
+        with open('server.log','w') as file_log:
+            file_log.write(f'{cliente_addr}| {timestamp} | {operation} | {response_time}')

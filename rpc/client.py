@@ -1,25 +1,11 @@
-import socket
-import threading
 import json
-import multiprocessing as mp
 import traceback
 import time
-import os
-import pickle
-import bs4
-import requests
-import concurrent.futures as cf
-
 import rpc_requests as rreq
-import mathOperations
 import cache_rpc
-from constants import operations_code as opc,cache_const as cac, files_and_urls as fiu, const_rpc as crpc
-
-from functools import reduce
-from typing import Callable,Dict,List
-
+from constants import operations_code as opc,cache_const as cac, const_rpc as crpc
+from typing import List
 import connections as cnn
-import inspect
 import random
 class Client:
     def __init__(self,ip,port) -> None:
@@ -37,10 +23,11 @@ class Client:
             self_instance = args[0]
             caller_name = func.__name__
 
-            self_instance.get_connection_server(caller_name)
-            response = func(*args,**kwargs)
-
-            self_instance.disconnect_server()
+            if self_instance.get_connection_server(caller_name) == True:
+                response = func(*args,**kwargs)
+                self_instance.disconnect_server()
+            else:
+                response = 'Nao foi possivel conectar ao servidor'
             return response
         return wrapper
 
@@ -54,9 +41,10 @@ class Client:
             if hosts == None and attemps > LIMIT_ATTEMPS:
                 return None
             if(len(hosts) == 0):
+                print('Nenhum servidor realiza essa operação')
                 return None
-            self.connect_to_server(hosts)
-            return
+            return self.connect_to_server(hosts)
+            
         pass
 
     def get_hosts_list(self,function_name):
@@ -76,8 +64,11 @@ class Client:
         server = random.choice(hosts)
         server_ip = server[0]
         server_port = server[1]
-        self.conection = cnn.make_client_connection(server_ip,server_port)
-        return
+        try:
+            self.conection = cnn.make_client_connection(server_ip,server_port)
+            return True
+        except Exception:
+            return False
         
     def disconnect_server(self):
         self.conection.send(json.dumps(rreq.prepare_request(opc.END,())).encode())
@@ -145,8 +136,6 @@ class Client:
 
     @intercept
     def sum(self,numbers:tuple) -> float:
-        # print(self.port)
-        # return 1+1
         req = rreq.prepare_request(opc.SUM,numbers)
         return self.process_request(req)
 
@@ -175,7 +164,12 @@ class Client:
     def last_news_ifbarbacena(self,quantity_news:int) -> List:
         req = rreq.prepare_request(opc.LAST_NEWS,quantity_news)
         return self.process_request(req)
-        pass
+
+    @intercept
+    def validate_cpf(self,cpf:str) -> bool:
+        req = rreq.prepare_request(opc.VALIDATE_CPF,cpf)
+        return self.process_request(req)
+
 
     def get_response(self):
         response_data = rreq.receive_complete_message(self.conection)
