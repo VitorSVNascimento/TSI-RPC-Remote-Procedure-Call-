@@ -264,5 +264,5 @@ class Server:
     
     def write_log(self,cliente_addr,timestamp,operation,response_time:datetime.datetime):
         print('chegou')
-        with open('server.log','a') as file_log:
+        with open('log/server.log','a') as file_log:
             file_log.write(f'{timestamp},{cliente_addr[0]},{operation.__name__},{response_time.microseconds/1000}ms\n')
