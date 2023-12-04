@@ -60,7 +60,6 @@ class Client:
             return None
 
     def connect_to_server(self,hosts):
-        print(hosts)
         server = random.choice(hosts)
         server_ip = server[0]
         server_port = server[1]
@@ -136,8 +135,11 @@ class Client:
 
     @intercept
     def sum(self,numbers:tuple) -> float:
+        print('entrou')
         req = rreq.prepare_request(opc.SUM,numbers)
-        return self.process_request(req)
+        result = self.process_request(req)
+        print(result)
+        return result
 
     @intercept
     def subtract(self,numbers:tuple) -> float:

@@ -16,7 +16,7 @@ class NameServer:
 
     def __get_operation_dict(self) -> Dict:
         return {
-            'sum' : [('127.0.0.1',8000),('127.0.0.1',8000)],
+            'sum' : [('127.0.0.1',8000)],
             'subtract' : [('127.0.0.1',8000)],
             'multiply' : [('127.0.0.1',8000)],
             'divide' : [('127.0.0.1',8000)],

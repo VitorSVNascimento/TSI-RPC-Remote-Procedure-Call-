@@ -29,7 +29,9 @@ class Server:
     def start(self) -> None:
         
         print('aguardando conexões')
+        print('its a test')
         while True:
+            print('opa')
             conn,addr = cnn.accept_conection(self)
             cnn.make_client_thread_in_server(self,self.client_loop,addr,conn)
     
@@ -264,5 +266,5 @@ class Server:
     
     def write_log(self,cliente_addr,timestamp,operation,response_time:datetime.datetime):
         print('chegou')
-        with open('log/server.log','a') as file_log:
+        with open('server.log','a') as file_log:
             file_log.write(f'{timestamp},{cliente_addr[0]},{operation.__name__},{response_time.microseconds/1000}ms\n')
