@@ -180,7 +180,8 @@ class Server:
             soup = bs4.BeautifulSoup(html_text,'html.parser')
             news = soup.find_all('a',{'class':'summary url'})
             for article in news:
-                headlines.append(article.text)
+                print(article)
+                headlines.append([article.text,article['href']])
                 news_quantity-=1
                 if news_quantity == 0:
                     break
