@@ -35,3 +35,11 @@ A ideia fundamental por trás do RPC é fornecer uma abstração de chamada de f
 ### Atividade 6 Consistencia e Replicação
 - Adição do mecanismo de cache que aproveita os dados caso o número de notícias solicitadas seja menor que um número previamente solicitado
 - Adição do mecanismo de consistencia com restrição de no máximo 5 minutos
+
+### Atividade 7 Segurança
+- Criar arquivo de log
+- Criar um script que leia o arquivo de log e exiba todos os ips únicos 
+- Notebook no google coolab para exibir gráficos a partir do arquivo de log
+
+### Atividade final
+- Interface gráfica utitlizando PySimpleGUI
